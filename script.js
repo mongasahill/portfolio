@@ -12,7 +12,7 @@ const CONTACT = {
   email: "sahilmonga9080@gmail.com",
   linkedin: "https://www.linkedin.com/in/sahilmongaa/",
   cv: "Sahil-Monga-CV.pdf",
-  photo: "images/sahil.jpg",
+  photo: "sahil.jpg",
   role: "Business student at BCIT, based in Abbotsford, BC",
   // Pre-filled into the visitor's new email draft.
   emailSubject: "Hello from your portfolio",
@@ -26,7 +26,7 @@ const PROJECTS = [
     short: "Moxies",
     // One scene the camera travels across. camera: x/y = % point to centre on,
     // z = zoom, w = zone width as a fraction of the scene (keeps it fitting on phones).
-    scene: { image: "images/moxies-scene.svg", bleed: true },
+    scene: { image: "moxies-scene.svg", bleed: true },
     slides: [
       {
         eyebrow: "Strategy and AI build, BCIT team project",
@@ -74,7 +74,7 @@ const PROJECTS = [
     tab: "Restaurant Analytics",
     short: "Analytics",
     // Same zone layout as the Moxies scene, so the camera points match.
-    scene: { image: "images/dashboard-scene.svg", bleed: true },
+    scene: { image: "dashboard-scene.svg", bleed: true },
     slides: [
       {
         eyebrow: "Business analytics, personal project",
@@ -121,8 +121,8 @@ const PROJECTS = [
     id: "web",
     tab: "Web Design",
     short: "Web",
-    // Real screenshots embedded in images/web-scene.svg (rebuild: images/web/build-scene.ps1).
-    scene: { image: "images/web-scene.svg", bleed: true },
+    // Real screenshots embedded in web-scene.svg (rebuild: images/web/build-scene.ps1).
+    scene: { image: "web-scene.svg", bleed: true },
     slides: [
       {
         eyebrow: "Web design, live sites",
@@ -383,7 +383,8 @@ function cameraTransform(sc, cam) {
     tx = Math.min(0, Math.max(vw - sc.W * s, tx));
     ty = Math.min(0, Math.max(vh - sc.H * s, ty));
   }
-  return `translate(${tx}px, ${ty}px) scale(${s})`;
+  // The element may be laid out smaller than the scene (sc.k), so scale up by 1/k.
+  return `translate(${tx}px, ${ty}px) scale(${s / (sc.k || 1)})`;
 }
 
 function moveCamera(sc, cam, animate) {
@@ -440,10 +441,15 @@ async function showScene(p, i, dir) {
     }
     media.src = info.src;
     media.className = "scene-media";
-    media.style.width = `${info.W}px`;
-    media.style.height = `${info.H}px`;
+    // Phones (iPhones especially) can refuse to draw very large images and leave
+    // them blank, so lay the scene out smaller and let the camera scale it up.
+    const dpr = window.devicePixelRatio || 1;
+    const pixelBudget = innerWidth <= 900 ? 12e6 : 32e6;
+    const k = Math.min(1, Math.sqrt(pixelBudget / (info.W * info.H * dpr * dpr)));
+    media.style.width = `${info.W * k}px`;
+    media.style.height = `${info.H * k}px`;
     wrap.appendChild(media);
-    scene = { id: p.id, ...info, wrap, media, cam: cameraFor(p, i, info.type) };
+    scene = { id: p.id, ...info, k, wrap, media, cam: cameraFor(p, i, info.type) };
     moveCamera(scene, scene.cam, false);
     swapLayer(wrap, dir);
     phTag.hidden = info.type !== "placeholder";
