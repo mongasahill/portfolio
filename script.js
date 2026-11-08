@@ -367,7 +367,8 @@ function cameraTransform(sc, cam) {
     let left = 0, right = vw, top = navB, bottom = vh;
     if (cr && wide) left = cr.right;
     if (cr && !wide) bottom = cr.top;
-    const freeW = right - left - 48, freeH = bottom - top - 40;
+    // Phones: let the visual run almost edge to edge.
+    const freeW = right - left - (wide ? 48 : 16), freeH = bottom - top - (wide ? 40 : 20);
     const w = cam.w || 0.16, h = cam.h || w * (sc.W / sc.H) * 0.7;
     // Scenes drawn with soft edges (bleed) may zoom out past "cover" so a shot always fits.
     z = Math.max(sc.bleed ? 0.4 : 1, Math.min(z, (0.96 * freeW) / (w * sc.W * base), (0.96 * freeH) / (h * sc.H * base)));
@@ -587,6 +588,7 @@ function updateFoot() {
   const last = si === n - 1;
   const label = pi < PROJECTS.length - 1 ? "Next project" : "Contact";
   nextBtn.classList.toggle("wide", last);
+  progressEl.parentElement.classList.toggle("is-last", last); // hides "06 / 06" to make room
   nextBtn.innerHTML = last ? `<span>${label}</span>${ARROW}` : ARROW;
   nextBtn.setAttribute("aria-label", last ? label : "Next slide");
 }
@@ -678,8 +680,10 @@ async function showContact(opts = {}) {
   release();
 }
 
+let introOpen = true; // true until "Explore the portfolio" is pressed
+
 function next() {
-  if (view === "contact") return;
+  if (introOpen || view === "contact") return;
   const n = PROJECTS[pi].slides.length;
   if (si < n - 1) goTo(pi, si + 1, 1);
   else if (pi < PROJECTS.length - 1) goTo(pi + 1, 0, 1);
@@ -687,6 +691,7 @@ function next() {
 }
 
 function prev() {
+  if (introOpen) return;
   if (view === "contact") {
     const lp = PROJECTS.length - 1;
     return goTo(lp, PROJECTS[lp].slides.length - 1, -1);
@@ -768,6 +773,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 addEventListener("hashchange", () => {
+  if (introOpen) return;
   const h = location.hash.slice(1);
   if (h === "contact") return showContact();
   const idx = PROJECTS.findIndex((p) => p.id === h);
@@ -786,13 +792,31 @@ addEventListener("resize", () => {
 
 /* ---------- start ---------- */
 (async () => {
-  if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1200))]);
+  const intro = $("intro"), introBtn = $("introBtn");
+  const header = document.querySelector(".nav"), main = document.querySelector("main");
+  header.inert = main.inert = true; // nothing behind the intro can be tabbed to or clicked
+
   const hash = location.hash.slice(1);
+  const idx = Math.max(0, PROJECTS.findIndex((p) => p.id === hash));
+  resolveScene(PROJECTS[idx]); // load the first scene while the intro is showing
+  const fontsReady = document.fonts && document.fonts.ready
+    ? Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1200))])
+    : null;
+
+  introBtn.focus();
+  await new Promise((r) => introBtn.addEventListener("click", r, { once: true }));
+  await fontsReady;
+
+  introOpen = false;
+  header.inert = main.inert = false;
+  introBtn.animate([{ transform: "scale(.94)", opacity: 0 }], { duration: T(320), easing: EASE_IN, fill: "forwards" });
+  const fade = intro.animate([{ opacity: 0 }], { duration: T(800), delay: T(120), easing: EASE_OUT, fill: "forwards" });
+  done(fade, T(920)).then(() => intro.remove()); // gone for good: no way back to it
+
   if (hash === "contact") {
     card.hidden = true;
     showContact({ instant: true });
   } else {
-    const idx = Math.max(0, PROJECTS.findIndex((p) => p.id === hash));
     await goTo(idx, 0, 1, { instant: true });
   }
 })();

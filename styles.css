@@ -52,6 +52,28 @@ body {
 button { font: inherit; letter-spacing: inherit; }
 :focus-visible { outline: 2px solid var(--blue-focus); outline-offset: 3px; }
 
+/* ---------- Intro screen ---------- */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: var(--parchment);
+}
+.intro-btn {
+  border: 0;
+  padding: 15px 30px;
+  border-radius: var(--r-pill);
+  background: var(--blue);
+  color: #fff;
+  font-size: 17px;
+  cursor: pointer;
+  transition: transform .25s var(--ease), background .2s;
+}
+.intro-btn:hover { background: var(--blue-focus); }
+.intro-btn:active { transform: scale(.95); }
+
 /* ---------- Fullscreen photography ---------- */
 .stage { position: fixed; inset: 0; overflow: hidden; }
 .bg {
@@ -305,7 +327,10 @@ button { font: inherit; letter-spacing: inherit; }
 .arrow:active:not(:disabled) { transform: scale(.95); }
 .arrow:disabled { opacity: .35; cursor: default; }
 .arrow-primary { background: var(--blue); color: #fff; }
-.arrow-primary.wide { padding: 0 14px 0 20px; font-size: 17px; }
+.arrow-primary.wide { padding: 0 14px 0 20px; font-size: 17px; white-space: nowrap; }
+.arrows { flex-shrink: 0; }            /* buttons keep their size... */
+.progress { min-width: 0; }            /* ...the progress bar gives way instead */
+.card-foot.is-last .counter { display: none; } /* full bar already says "last slide" */
 
 /* ---------- Contact ---------- */
 /* Contact card sits centred in the space below the nav bar. */
@@ -404,9 +429,32 @@ button { font: inherit; letter-spacing: inherit; }
   .title { font-size: 30px; letter-spacing: -.03em; }
   .chip { font-size: 13px; }
   .ph-tag { top: 112px; bottom: auto; }
+
+  /* --- Phone polish: slimmer nav, compact card, more room for the visuals --- */
+  :root { --nav-h: 94px; }
+  .nav { padding: 8px var(--gutter) 10px; row-gap: 8px; }
+  .brand { font-size: 18px; }
+  .cta { padding: 6px 14px; font-size: 13px; }
+  .tabs { padding: 2px; }
+  .tab { padding: 6px 4px; font-size: 13px; }
+  .tab-indicator { top: 2px; bottom: 2px; }
+
+  #card { padding: 18px 18px 8px; border-radius: 20px; }
+  #card .eyebrow { font-size: 13px; margin-bottom: 4px; }
+  #card .title { font-size: 25px; line-height: 1.1; margin-bottom: 8px; }
+  #card .text { font-size: 15px; line-height: 1.45; }
+  #card .chips { display: none; }         /* keep the phone card to the story */
+  #card .note { margin-top: 10px; font-size: 13px; }
+  #card .site-link { margin-top: 10px; font-size: 15px; }
+  #card .card-foot { margin-top: 12px; padding-top: 8px; }
+  #card .card-body { max-height: calc(100dvh - 300px); }
+  .arrow { height: 40px; min-width: 40px; }
+  .arrow-primary.wide { padding: 0 10px 0 16px; font-size: 15px; }
+  .counter { min-width: 0; }
 }
 @media (max-width: 419px) {
   .title { font-size: 28px; }
+  #card .title { font-size: 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
