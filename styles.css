@@ -1,0 +1,414 @@
+/* =========================================================
+   Frost & Ink, set to Apple's DESIGN.md rules:
+   - one interactive colour (Action Blue)
+   - 400 / 600 weights only, tight display tracking, 17px body
+   - no shadows on UI; depth comes from blur + hairlines
+   - radius grammar: 8 (utility), 18 (cards), pill (actions)
+   ========================================================= */
+:root {
+  --ink: #1d1d1f;
+  --ink-80: #333336;
+  --ink-48: #6e6e73;
+  --parchment: #f5f5f7;
+  --blue: #0066cc;
+  --blue-focus: #0071e3;
+  --hairline: rgba(0, 0, 0, .08);
+  --glass: rgba(245, 245, 247, .72);
+  --glass-strong: rgba(250, 250, 252, .82);
+  --chip: rgba(210, 210, 215, .64);
+  --blur: saturate(180%) blur(20px);
+
+  --r-sm: 8px;
+  --r-lg: 18px;
+  --r-pill: 9999px;
+
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --spring: cubic-bezier(.34, 1.4, .64, 1);
+  --gutter: clamp(16px, 4vw, 56px);
+  --nav-h: 56px;
+
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body { height: 100%; overscroll-behavior: none; } /* no pull-to-refresh bounce on swipes */
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--parchment);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.44;
+  letter-spacing: -.022em;
+  font-feature-settings: "ss03", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button { font: inherit; letter-spacing: inherit; }
+:focus-visible { outline: 2px solid var(--blue-focus); outline-offset: 3px; }
+
+/* ---------- Fullscreen photography ---------- */
+.stage { position: fixed; inset: 0; overflow: hidden; }
+.bg {
+  position: absolute;
+  inset: -3%;
+  background-color: var(--parchment);
+  background-size: cover;
+  background-position: center;
+  will-change: transform, opacity, filter;
+  z-index: 1;
+}
+.bg:has(.scene-media) { inset: 0; }
+.scene-media {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  object-fit: cover;
+  transform-origin: 0 0;
+  will-change: transform;
+  user-select: none;
+  pointer-events: none;
+}
+/* Functional legibility veil behind the card, not decoration. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(245, 245, 247, .55), rgba(245, 245, 247, 0) 50%);
+}
+.ph-tag {
+  position: fixed;
+  right: var(--gutter);
+  bottom: var(--gutter);
+  z-index: 4;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  letter-spacing: -.01em;
+  color: var(--ink-48);
+  background: var(--chip);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+}
+
+/* ---------- Frosted top bar (Apple sub-nav) ---------- */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  height: 56px;
+  padding: 0 var(--gutter);
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--hairline);
+}
+.brand {
+  justify-self: start;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.tabs {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, .05);
+}
+.tab {
+  position: relative;
+  z-index: 1;
+  border: 0;
+  background: none;
+  padding: 7px 16px;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  color: var(--ink-80);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .3s var(--ease);
+}
+.tab[aria-selected="true"] { color: var(--ink); font-weight: 600; }
+.tab .short { display: none; }
+.tab-indicator {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: 0;
+  border-radius: var(--r-pill);
+  background: #fff;
+  border: 1px solid var(--hairline);
+  transition: transform .6s var(--spring), width .6s var(--spring), opacity .3s var(--ease);
+}
+.tab-indicator.no-anim { transition: none; }
+.tab-indicator.off { opacity: 0; }
+
+.cta {
+  justify-self: end;
+  border: 0;
+  padding: 7px 18px;
+  border-radius: var(--r-pill);
+  background: var(--blue);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform .25s var(--ease);
+}
+.cta:active { transform: scale(.95); }
+.cta[aria-current="page"] { background: var(--ink); }
+
+/* ---------- Glass card ---------- */
+.card {
+  position: fixed;
+  left: var(--gutter);
+  bottom: var(--gutter);
+  z-index: 5;
+  /* Narrows on mid-size screens so the camera has room beside it. */
+  width: min(clamp(360px, 42vw, 580px), calc(100vw - 2 * var(--gutter)));
+  padding: 32px 32px 18px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  transform-origin: bottom left;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid rgba(255, 255, 255, .7);
+  outline: 1px solid var(--hairline);
+  outline-offset: -1px;
+}
+.card-body {
+  max-height: calc(100dvh - 240px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.card-body::-webkit-scrollbar { display: none; }
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -.016em;
+  color: var(--ink-48);
+}
+.title {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 3.6vw, 48px);
+  line-height: 1.07;
+  font-weight: 600;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+.text {
+  margin: 0;
+  max-width: 44ch;
+  color: var(--ink-80);
+  text-wrap: pretty;
+}
+.note { margin: 16px 0 0; font-size: 14px; color: var(--ink-48); }
+.site-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  color: var(--blue);
+  font-size: 17px;
+  text-decoration: none;
+}
+.site-link:hover { text-decoration: underline; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.chip {
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  background: #fff;
+  border: 1px solid var(--hairline);
+  color: var(--ink);
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+}
+.progress { display: flex; gap: 6px; flex: 1; }
+.seg {
+  position: relative;
+  flex: 1;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.seg::before, .seg::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  top: 8.5px;
+  height: 3px;
+  border-radius: 3px;
+}
+.seg::before { background: rgba(0, 0, 0, .1); }
+.seg::after {
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .7s var(--ease);
+}
+.seg.done::after { transform: scaleX(1); }
+
+.counter {
+  min-width: 52px;
+  text-align: right;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-48);
+}
+.arrows { display: flex; gap: 8px; }
+.arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--chip);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform .25s var(--ease), opacity .2s;
+}
+.arrow:active:not(:disabled) { transform: scale(.95); }
+.arrow:disabled { opacity: .35; cursor: default; }
+.arrow-primary { background: var(--blue); color: #fff; }
+.arrow-primary.wide { padding: 0 14px 0 20px; font-size: 17px; }
+
+/* ---------- Contact ---------- */
+/* Contact card sits centred in the space below the nav bar. */
+.card.contact {
+  top: calc(var(--nav-h) + 16px);
+  bottom: 16px;
+  left: var(--gutter);
+  right: var(--gutter);
+  margin: auto;
+  height: fit-content;
+  width: min(560px, calc(100vw - 2 * var(--gutter)));
+  transform-origin: center;
+}
+/* No slide controls under the contact card, so it can use that height. */
+.contact .card-body { max-height: calc(100dvh - var(--nav-h) - 84px); }
+/* Shorter laptop screens: tighten the contact card so it fits without scrolling. */
+@media (max-height: 760px) and (min-width: 641px) {
+  .contact .profile { margin-bottom: 14px; }
+  .contact .avatar { width: 64px; height: 64px; }
+  .contact .title { margin-bottom: 10px; }
+  .contact .links { margin-top: 16px; }
+  .contact .link { padding: 11px 16px; }
+  .contact .fine { margin-top: 12px; }
+}
+.profile { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+.avatar {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  outline: 1px solid var(--hairline);
+}
+.profile-name { margin: 0; font-size: 19px; font-weight: 600; }
+.profile-role { margin: 2px 0 0; font-size: 14px; color: var(--ink-48); }
+.links { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 24px; }
+.link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--r-sm);
+  background: #fff;
+  border: 1px solid var(--hairline);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform .25s var(--ease);
+}
+.link:active { transform: scale(.98); }
+.link svg { color: var(--blue); flex-shrink: 0; }
+.link-label { width: 72px; flex-shrink: 0; font-size: 14px; color: var(--ink-48); }
+.link-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.copied { display: none; font-size: 13px; font-weight: 600; color: var(--blue); white-space: nowrap; }
+.link.is-copied .copied { display: inline; }
+.link.is-copied .link-value { opacity: .35; }
+.email-alt { margin: 12px 0 0; font-size: 14px; color: var(--ink-48); }
+.email-alt a { color: var(--blue); text-decoration: none; }
+.email-alt a:hover { text-decoration: underline; }
+.fine { margin: 22px 0 6px; font-size: 12px; color: var(--ink-48); }
+
+/* ---------- Tablet / phone ---------- */
+@media (max-width: 833px) {
+  :root { --nav-h: 108px; } /* two-row nav */
+  .nav {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "brand cta" "tabs tabs";
+    height: auto;
+    row-gap: 10px;
+    padding: 10px var(--gutter) 12px;
+  }
+  .brand { grid-area: brand; font-size: 19px; }
+  .cta { grid-area: cta; }
+  .tabs { grid-area: tabs; }
+  .tab { flex: 1; padding: 7px 4px; }
+}
+@media (max-width: 640px) {
+  :root { --gutter: 16px; }
+  .tab .full { display: none; }
+  .tab .short { display: inline; }
+  .card {
+    right: var(--gutter);
+    width: auto;
+    bottom: max(var(--gutter), env(safe-area-inset-bottom));
+    padding: 24px 20px 12px;
+  }
+  .card-body { max-height: calc(100dvh - 280px); }
+  .contact .card-body { max-height: calc(100dvh - 180px); }
+  .profile { gap: 14px; margin-bottom: 16px; }
+  .avatar { width: 64px; height: 64px; }
+  .links { margin-top: 18px; }
+  .link { padding: 12px 14px; }
+  .link-label { display: none; } /* the values say what they are */
+  .link-value { font-size: 16px; }
+  .fine { margin-top: 14px; }
+  .title { font-size: 30px; letter-spacing: -.03em; }
+  .chip { font-size: 13px; }
+  .ph-tag { top: 112px; bottom: auto; }
+}
+@media (max-width: 419px) {
+  .title { font-size: 28px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0s !important; }
+}
